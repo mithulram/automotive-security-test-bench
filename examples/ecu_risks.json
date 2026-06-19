@@ -1,0 +1,49 @@
+{
+  "risks": [
+    {
+      "id": "ASB-001",
+      "asset": "Service discovery gateway",
+      "vulnerability": "Unauthenticated service advertisement exposes internal endpoints to untrusted nodes.",
+      "likelihood": 4,
+      "impact": 4,
+      "threat_categories": ["authentication", "service-discovery"],
+      "existing_controls": ["network-segmentation"]
+    },
+    {
+      "id": "ASB-002",
+      "asset": "Powertrain ECU communication",
+      "vulnerability": "Control messages can be replayed or tampered with on a shared communication path.",
+      "likelihood": 3,
+      "impact": 5,
+      "threat_categories": ["replay", "tampering"],
+      "existing_controls": []
+    },
+    {
+      "id": "ASB-003",
+      "asset": "Central gateway node",
+      "vulnerability": "Routing and policy decision points can be exhausted by a denial-of-service event.",
+      "likelihood": 3,
+      "impact": 4,
+      "threat_categories": ["denial-of-service"],
+      "existing_controls": ["network-segmentation"]
+    },
+    {
+      "id": "ASB-004",
+      "asset": "Diagnostic interface",
+      "vulnerability": "Diagnostic access is exposed beyond the intended maintenance context.",
+      "likelihood": 2,
+      "impact": 4,
+      "threat_categories": ["diagnostics", "authentication"],
+      "existing_controls": []
+    },
+    {
+      "id": "ASB-005",
+      "asset": "ECU software update path",
+      "vulnerability": "An update package is accepted without sufficient provenance and integrity verification.",
+      "likelihood": 2,
+      "impact": 5,
+      "threat_categories": ["update", "tampering"],
+      "existing_controls": ["secure-update"]
+    }
+  ]
+}
