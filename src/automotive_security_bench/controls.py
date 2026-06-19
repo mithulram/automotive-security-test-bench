@@ -48,6 +48,18 @@ THREAT_CONTROL_MAP: dict[str, tuple[str, ...]] = {
 }
 
 
+def is_mapped_category(category: str) -> bool:
+    """Return True when a threat category has at least one mapped control."""
+
+    return category.lower() in THREAT_CONTROL_MAP
+
+
+def unmapped_categories(categories: tuple[str, ...]) -> tuple[str, ...]:
+    """Return threat categories that have no control mapping (case-insensitive lookup)."""
+
+    return tuple(category for category in categories if not is_mapped_category(category))
+
+
 def controls_for_categories(categories: tuple[str, ...]) -> tuple[Control, ...]:
     """Return unique controls in a stable order for known threat categories."""
 

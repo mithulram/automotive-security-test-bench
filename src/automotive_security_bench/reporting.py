@@ -25,7 +25,7 @@ def write_json_report(assessment: Assessment, path: str | Path) -> Path:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
-        json.dumps(assessment.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(assessment.to_dict(), indent=2, sort_keys=True) + "\n",encoding="utf-8"
     )
     return output_path
 
@@ -46,13 +46,34 @@ def write_html_report(assessment: Assessment, path: str | Path) -> Path:
         )
     )
     rows = "".join(_risk_row(item) for item in assessment.risks)
-    output_path.write_text(_page_template(cards=cards, rows=rows), encoding="utf-8")
+    warnings = _warnings_section(assessment.warnings)
+    output_path.write_text(
+        _page_template(cards=cards, rows=rows, warnings=warnings),encoding="utf-8"
+    )
     return output_path
+
+
+def _warnings_section(warnings: tuple[str, ...]) -> str:
+    if not warnings:
+        return ""
+    items = "".join(f"<li>{escape(warning)}</li>" for warning in warnings)
+    return (
+        '<section class="warnings" aria-label="Manual review warnings">'
+        "<h2>Manual review required</h2>"
+        f"<ul>{items}</ul>"
+        "</section>"
+    )
 
 
 def _risk_row(assessed_risk) -> str:
     risk = assessed_risk.risk
-    controls = ", ".join(control.title for control in assessed_risk.recommended_controls) or "Review required"
+    if assessed_risk.recommended_controls:
+        controls = ", ".join(control.title for control in assessed_risk.recommended_controls)
+    else:
+        controls = "Manual review required"
+    if assessed_risk.unmapped_threat_categories:
+        unmapped = ", ".join(assessed_risk.unmapped_threat_categories)
+        controls += f" (unmapped categories: {unmapped})"
     css_class = LEVEL_STYLE[assessed_risk.level]
     return "".join(
         (
@@ -66,7 +87,7 @@ def _risk_row(assessed_risk) -> str:
     )
 
 
-def _page_template(*, cards: str, rows: str) -> str:
+def _page_template(*, cards: str, rows: str, warnings: str) -> str:
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -80,7 +101,7 @@ def _page_template(*, cards: str, rows: str) -> str:
     h1 {{ margin: 0 0 8px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.03em; }}
     h2 {{ margin-top: 36px; font-size: 1.3rem; }}
     p {{ color: #52606d; line-height: 1.55; max-width: 78ch; }}
-    .metrics {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));gap: 14px; }}
     .metric {{ background: white; border: 1px solid #d9e2ec; border-radius: 12px; padding: 18px; }}
     .metric span {{ display: block; color: #52606d; font-size: .9rem; }}
     .metric strong {{ display: block; margin-top: 6px; font-size: 2rem; }}
@@ -94,6 +115,9 @@ def _page_template(*, cards: str, rows: str) -> str:
     .badge {{ display: inline-block; font-weight: 700; white-space: nowrap; }}
     .badge.medium {{ color: #795c00; }}
     .badge.low {{ color: #1a6b3d; }}
+    .warnings {{ background: #fff4e5; border: 1px solid #f0c987; border-radius: 12px; padding: 18px 22px; margin-bottom: 28px; }}
+    .warnings h2 {{ margin: 0 0 10px; color: #8a4b00; font-size: 1.1rem; }}
+    .warnings ul {{ margin: 0; padding-left: 1.2rem; color: #5c3b00; line-height: 1.5; }}
     footer {{ margin-top: 30px; color: #6b7c93; font-size: .9rem; }}
     @media (max-width: 760px) {{ .metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }} table, thead, tbody, th, td, tr {{ display: block; }} thead {{ display: none; }} td {{ border-bottom: 0; padding: 9px 15px; }} tr {{ border-bottom: 1px solid #d9e2ec; padding: 8px 0; }} }}
   </style>
@@ -103,6 +127,7 @@ def _page_template(*, cards: str, rows: str) -> str:
     <h1>Automotive Security Assessment</h1>
     <p>A reproducible risk-prioritisation report for distributed ECU communication scenarios. Scores are likelihood × impact on a 5×5 matrix; recommendations are mapped from the input threat categories.</p>
   </header>
+  {warnings}
   <section class="metrics" aria-label="Assessment summary">{cards}</section>
   <section>
     <h2>Prioritised risks</h2>

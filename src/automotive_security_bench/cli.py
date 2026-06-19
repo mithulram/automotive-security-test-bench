@@ -63,6 +63,12 @@ def _print_summary(assessment) -> None:
         f"medium={summary['medium_count']} | low={summary['low_count']} | "
         f"recommended_controls={summary['recommended_control_count']}"
     )
+    for warning in assessment.warnings:
+        print(f"WARNING: {warning}")
     for item in assessment.risks:
         controls = ", ".join(control.identifier for control in item.recommended_controls) or "manual-review"
-        print(f"{item.risk.identifier}: {item.level.value} ({item.score}) | {controls}")
+        line = f"{item.risk.identifier}: {item.level.value} ({item.score}) | {controls}"
+        if item.unmapped_threat_categories:
+            unmapped = ", ".join(item.unmapped_threat_categories)
+            line += f" | unmapped={unmapped}"
+        print(line)
